@@ -30,3 +30,16 @@
 *.exe
 *.out
 *.app
+
+# Archives
+*.rar
+*.zip
+*.gz
+*.bz2
+*.xz
+
+# VS
+.vs/
+async-file-loader.VC.VC.opendb
+async-file-loader.VC.db
+x64/

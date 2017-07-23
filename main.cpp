@@ -6,6 +6,8 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <exception>
+#include <iterator>
 #include <boost\program_options.hpp>
 
 namespace opt = boost::program_options;
@@ -41,19 +43,27 @@ int DownloadFile(const std::string& url, const std::string& filename) {
     output.close();
     return 0;
 }
-//#if 0
-void ParseCommand(int argc, char *argv[]) {
+
+std::vector<std::string> ParseCommand(int argc, char **argv) {
     opt::options_description desc("All options");
 
     desc.add_options()
+        ("help,h", "produce help message")
         ("uri,i", opt::value<std::vector<std::string> >(), "list of files to download")
         ;
 
     opt::variables_map vm;
     opt::store(opt::parse_command_line(argc, argv, desc), vm);
+    if (vm.count("help"))
+    {
+        std::cout << desc << "\n";
+        exit(0);
+    }
+
     opt::notify(vm);
+
+    return vm["uri"].as<std::vector<std::string> >();
 }
-//#endif
 
 std::string ParseFilename(std::string& url) {
     std::string filename;
@@ -70,16 +80,23 @@ std::string ParseFilename(std::string& url) {
 }
 
 int main(int argc, char *argv[]) {
-    ParseCommand(argc, argv);
-    std::cout << "--------------------------" << std::endl;
-    std::string url("http://sources.buildroot.net/ace-1.2.tar.gz");
-    std::string filename = ParseFilename(url);
 
-    std::future<int> fut = std::async(DownloadFile, url, filename);
+    try {
+        std::vector<std::string> fileList = ParseCommand(argc, argv);
+        for (std::vector<std::string>::iterator it = fileList.begin(); it < fileList.end(); ++it) {
+            std::string url = *it;
+            std::string filename = ParseFilename(url);
 
-    std::cout << "Getting file." << std::endl;
+            std::future<int> fut = std::async(DownloadFile, url, filename);
 
-    fut.get();
+            std::cout << "Getting " << filename << std::endl;
+
+            fut.get();
+        }
+    }
+    catch (std::exception& ex) {
+        std::cout << "Exception happend " << ex.what() << std::endl;
+    }
 
     return 0;
 }
