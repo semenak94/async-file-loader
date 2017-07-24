@@ -89,9 +89,16 @@ int main(int argc, char *argv[]) {
 
             std::future<int> fut = std::async(DownloadFile, url, filename);
 
-            std::cout << "Getting " << filename << std::endl;
+            std::cout << "Getting " << filename << "...";
 
-            fut.get();
+            int errorCode = fut.get();
+            if (!errorCode) {
+                std::cout << "OK" << std::endl;
+            }
+            else {
+                std::cout << "Error " << errorCode << std::endl;
+                exit(1);
+            }
         }
     }
     catch (std::exception& ex) {
